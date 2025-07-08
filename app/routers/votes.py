@@ -1,35 +1,25 @@
-from supabase import create_client, Client
-import os
-from fastapi import HTTPException
+# app/routers/votes.py
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise RuntimeError("SUPABASE_URL 또는 SUPABASE_KEY 환경변수가 없습니다.😢")
+from app.services.votes_service import has_already_voted, insert_vote
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+router = APIRouter()
 
-def has_already_voted(user_id: str, link_id: str) -> bool:
-    resp = supabase.table("votes")\
-                   .select("id")\
-                   .eq("user_id", user_id)\
-                   .eq("link_id", link_id)\
-                   .execute()
-    return bool(resp.data)
+class VoteIn(BaseModel):
+    link_id: str
+    user_id: str
 
-def insert_vote(user_id: str, link_id: str):
-    try:
-        supabase.table("users")\
-                 .upsert({"id": user_id})\
-                 .execute()
-    except Exception as e:
-        print(f"⚠️ Supabase 유저 업서트 에러: {e}")
+@router.post("/", status_code=201)
+async def vote(vote: VoteIn, request: Request):
+    raw = await request.body()
+    print("📦 Raw request body:", raw)
 
-    try:
-        result = supabase.table("votes")\
-                         .insert({"user_id": user_id, "link_id": link_id})\
-                         .execute()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"투표 저장 실패: {e}")
+    if has_already_voted(vote.user_id, vote.link_id):
+        raise HTTPException(status_code=409, detail="이미 투표했습니다😼")
 
-    return result
+    result = insert_vote(vote.user_id, vote.link_id)
+    if not getattr(result, "data", None):
+        raise HTTPException(status_code=500, detail="투표 저장 실패😿")
+
+    return { "message": "투표 완료했음" }
