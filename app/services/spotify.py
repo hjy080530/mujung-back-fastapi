@@ -1,6 +1,7 @@
 import os
 from typing import List
 import httpx
+from fastapi import HTTPException
 from pydantic import BaseModel
 
 class TrackInfo(BaseModel):
@@ -13,24 +14,35 @@ class SearchResult(BaseModel):
     name: str
     artist: str
 
+def extract_track_id(link: str) -> str:
+    return link.split("/")[-1].split("?")[0]
 async def get_track_info(link: str) -> TrackInfo:
+    track_id = extract_track_id(link)
+
+    # 1. Access Token 직접 요청
+    token_res = await httpx.AsyncClient().post(
+        "https://accounts.spotify.com/api/token",
+        data={"grant_type": "client_credentials"},
+        auth=(os.getenv("SPOTIFY_CLIENT_ID"), os.getenv("SPOTIFY_CLIENT_SECRET"))
+    )
+    token = token_res.json()["access_token"]
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    url = f"https://api.spotify.com/v1/tracks/{track_id}"
     async with httpx.AsyncClient() as client:
-        token_res = await client.post(
-            "https://accounts.spotify.com/api/token",
-            data={"grant_type": "client_credentials"},
-            auth=(os.getenv("SPOTIFY_CLIENT_ID"), os.getenv("SPOTIFY_CLIENT_SECRET"))
-        )
+        res = await client.get(url, headers=headers)
+        track_data = res.json()
 
-        token = token_res.json()["access_token"]
+        print("✅ SPOTIFY LINK:", link)
+        print("🔍 RESPONSE STATUS:", res.status_code)
+        print("📦 RESPONSE JSON:", track_data)
 
-        track_id = link.split("/")[-1].split("?")[0]
+        if res.status_code != 200 or "name" not in track_data:
+            raise HTTPException(status_code=500, detail="Spotify 트랙 정보 오류")
 
-        track_res = await client.get(
-            f"https://api.spotify.com/v1/tracks/{track_id}",
-            headers={"Authorization": f"Bearer {token}"}
-        )
-
-        track_data = track_res.json()
         return TrackInfo(
             link_id=track_id,
             name=track_data["name"],

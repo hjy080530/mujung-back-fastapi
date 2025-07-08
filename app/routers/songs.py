@@ -12,7 +12,6 @@ class SongIn(BaseModel):
 @router.post("/", status_code=201)
 async def create_song(song: SongIn):
     info = await get_track_info(song.link)
-
     supabase.table("spotify_information").upsert({
         "link_id": info.link_id,
         "link": song.link,
