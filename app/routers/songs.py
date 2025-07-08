@@ -8,7 +8,6 @@ router = APIRouter()
 class SongIn(BaseModel):
     link: str
 
-
 @router.post("/", status_code=201)
 async def create_song(song: SongIn):
     info = await get_track_info(song.link)
