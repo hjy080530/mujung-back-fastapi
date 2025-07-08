@@ -10,7 +10,8 @@ app = FastAPI()
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.environ.get("SESSION_SECRET_KEY", "fallback-secret")
+    secret_key=os.environ.get("SESSION_SECRET_KEY", "fallback-secret"),
+    session_cookie="cookie"
 )
 
 app.add_middleware(
@@ -18,6 +19,7 @@ app.add_middleware(
     allow_origins=["https://mujung-three.vercel.app"],
     allow_methods=["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
     allow_headers=["*"],
+    same_site="none",
     allow_credentials=True
 )
 
