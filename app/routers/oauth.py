@@ -1,8 +1,11 @@
 # app/routers/oauth.py
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import APIRouter, Request, HTTPException
 from starlette.responses import RedirectResponse
 import os
 import jwt
+import requests
 
 from ..auth.oauth_client import oauth
 
@@ -17,24 +20,53 @@ async def google_login(request: Request):
 @router.get("/google/callback", name="google_callback")
 async def google_callback(request: Request):
 
-    try:
-        token = await oauth.google.authorize_access_token(request)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"OAuth 인증 실패: {str(e)}")
-    try:
-        user_info = await oauth.google.parse_id_token(request, token)
-    except KeyError:
-        resp = await oauth.google.get("userinfo", token=token)
-        user_info = resp.json()
+    code = request.query_params.get("code")
+
+    GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+    GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+    GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI')
+
+    print(code)
+
+    token_response = requests.post(
+        "https://oauth2.googleapis.com/token",
+        data={
+            "code": code,
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "redirect_uri": GOOGLE_REDIRECT_URI,
+            "grant_type": "authorization_code",
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+
+    token = token_response.json().get("access_token")
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    user_response = requests.get("https://www.googleapis.com/oauth2/v3/userinfo", headers=headers)
+
+    user_info = user_response.json()
 
     email = user_info.get("email")
-    user_id = user_info.get("sub") or user_info.get("id")
+    user_id = user_info.get("sub")
+
+    print("아이디 : " + user_id)
+    print("이메일 : " + email)
+
     if not email or not user_id:
         raise HTTPException(status_code=400, detail="사용자 정보를 가져올 수 없습니다.😢")
 
+    secret = os.getenv("JWT_SECRET")
+    if not secret:
+        raise HTTPException(
+            status_code=500,
+            detail="서버 환경변수 JWT_SECRET이 설정되지 않았긔!"
+        )
     jwt_token = jwt.encode(
         {"email": email, "user_id": user_id},
-        os.getenv("JWT_SECRET"),
+        secret,
         algorithm="HS256"
     )
 

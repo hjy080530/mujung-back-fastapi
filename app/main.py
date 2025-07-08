@@ -23,10 +23,11 @@ app.add_middleware(
     allow_credentials=True
 )
 
-from .routers.songs import router as songs_router
-from .routers.votes import router as votes_router
-from .routers.search import router as search_router
-from .routers.oauth import router as oauth_router
+from app.routers.songs import router as songs_router
+from app.routers.votes import router as votes_router
+from app.routers.search import router as search_router
+from app.routers.oauth import router as oauth_router
+
 
 app.include_router(songs_router, prefix="/songs")
 app.include_router(votes_router, prefix="/votes")
