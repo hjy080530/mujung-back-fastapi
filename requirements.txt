@@ -1,0 +1,9 @@
+supabase
+fastapi
+uvicorn
+httpx
+authlib
+python-jose
+pydantic[email]
+email-validator
+python-multipart
