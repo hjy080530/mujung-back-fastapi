@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse
 import os
 import jwt
 import requests
-from supabase import create_client, Client  # Supabase 클라이언트
+from supabase import create_client, Client  #
 
 from ..auth.oauth_client import oauth
 
