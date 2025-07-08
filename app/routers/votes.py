@@ -1,6 +1,4 @@
-from urllib import request
-
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from app.services.votes import has_already_voted, insert_vote
 
@@ -11,10 +9,10 @@ class VoteIn(BaseModel):
     user_id: str
 
 @router.post("", status_code=201)
-def vote(vote: VoteIn):
-    raw =request.body()
+async def vote(vote: VoteIn, request: Request):  # ✅ async def 로 변경
+    raw = await request.body()  # ✅ await now allowed
     print("📦 Raw request body:", raw)
-    return {"debug": raw}
+
     # 1. 중복 투표 검사
     if has_already_voted(vote.user_id, vote.link_id):
         raise HTTPException(status_code=409, detail="이미 투표했습니다")
