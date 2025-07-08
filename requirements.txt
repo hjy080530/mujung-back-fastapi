@@ -7,3 +7,4 @@ python-jose
 pydantic[email]
 email-validator
 python-multipart
+python-dotenv
