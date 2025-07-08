@@ -2,12 +2,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
+from starlette.middleware.sessions import SessionMiddleware
 
 load_dotenv()  # .env 로드
 
 app = FastAPI()
 
-# CORS 설정
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.environ.get("SESSION_SECRET_KEY", "fallback-secret")
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://mujung-three.vercel.app"],
