@@ -9,7 +9,7 @@ class VoteIn(BaseModel):
     link_id: str
     email: EmailStr
 
-@router.post("/", status_code=201)
+@router.post("", status_code=201)
 def vote(vote: VoteIn):
     # 1. 이메일 도메인 체크
     if not vote.email.endswith("@bssm.hs.kr"):
