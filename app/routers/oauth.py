@@ -58,21 +58,18 @@ async def google_callback(request: Request):
     if not email or not user_id:
         raise HTTPException(status_code=400, detail="사용자 정보를 가져올 수 없긔😢")
 
-    # Supabase users 테이블에 upsert (새로 없으면 삽입, 있으면 무시)
     try:
         supabase.table("users")\
-                 .upsert({"id": user_id, "email": email})\
+                 .upsert({"user_id": user_id, "email": email})\
                  .execute()
     except Exception as e:
         print(f"⚠️ Supabase 유저 업서트 실패: {e}")
 
-    # JWT 생성
     secret = os.getenv("JWT_SECRET")
     if not secret:
         raise HTTPException(status_code=500, detail="JWT_SECRET이 설정되지 않았긔!")
     jwt_token = jwt.encode({"email": email, "user_id": user_id}, secret, algorithm="HS256")
 
-    # 프론트로 리다이렉트
     frontend = os.getenv("FRONTEND_URL")
     if not frontend:
         raise HTTPException(status_code=500, detail="FRONTEND_URL이 설정되지 않았긔!")

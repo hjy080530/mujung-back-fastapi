@@ -1,8 +1,7 @@
+# app/services/votes_service.py
 from supabase import create_client, Client
 import os
-from fastapi import HTTPException, APIRouter
-
-
+from fastapi import HTTPException
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -12,17 +11,21 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def has_already_voted(user_id: str, link_id: str) -> bool:
-    resp = supabase.table("votes")\
-                   .select("id")\
-                   .eq("user_id", user_id)\
-                   .eq("link_id", link_id)\
-                   .execute()
+    resp = (
+        supabase
+        .table("votes")
+        .select("*")
+        .eq("user_id", user_id)
+        .eq("link_id", link_id)
+        .limit(1)
+        .execute()
+    )
     return bool(resp.data)
 
 def insert_vote(user_id: str, link_id: str):
     try:
         supabase.table("users")\
-                 .upsert({"id": user_id})\
+                 .upsert({"user_id": user_id})\
                  .execute()
     except Exception as e:
         print(f"⚠️ Supabase 유저 업서트 에러: {e}")
