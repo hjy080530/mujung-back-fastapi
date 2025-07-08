@@ -10,8 +10,7 @@ app = FastAPI()
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.environ.get("SESSION_SECRET_KEY", "fallback-secret"),
-    session_cookie="cookie"
+    secret_key=os.environ.get("SESSION_SECRET_KEY", "fallback-secret")
 )
 
 app.add_middleware(
