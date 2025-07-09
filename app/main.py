@@ -28,9 +28,11 @@ from app.routers.votes import router as votes_router
 from app.routers.search import router as search_router
 from app.routers.oauth import router as oauth_router
 from app.routers.topsongs import router as topsongs_router
+from app.routers.spotifytop import router as spotifytops_router
 
 app.include_router(songs_router, prefix="/songs")
 app.include_router(votes_router, prefix="/votes")
 app.include_router(search_router, prefix="/search")
 app.include_router(oauth_router, prefix="/oauth")
 app.include_router(topsongs_router, prefix="/topsongs")
+app.include_router(spotifytops_router, prefix="/spotify")
